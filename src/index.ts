@@ -1,5 +1,6 @@
 import crypto, { type BinaryLike } from "crypto";
 import config from "../config.json";
+import { $ } from "bun";
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.WEBHOOK_SECRET || "";
@@ -66,26 +67,13 @@ async function handleRequest(req: Request) {
 	// 		{ status: 500 }
 	// 	);
 
-	const commands = [
-		["sh", "-c", `'cd ${v.path} && git pull'`],
-		...v.build.map((command) => ["sh", "-c", `'${command.join(" ")}'`]),
-		// [`${config.binPath}/pm2`, "restart", k],
-		["sh", "-c", `'pm2 restart ${k}'`],
-	];
+	const commands = [`git pull`, ...v.build, `pm2 restart ${k}`];
 
-	commands.forEach(async (command) => {
-		const { stdout, stderr, exitCode, exited } = Bun.spawn(command, {
-			cwd: v.path,
-			stderr: "inherit",
-			stdout: "inherit",
-		});
-		await exited;
-		if (exitCode !== 0)
-			return Response.json(
-				{ message: `Error building. (command: ${command})` },
-				{ status: 500 }
-			);
-	});
+	for (const command of commands) {
+		const res = await $`${command}`.cwd(v.path);
+		if (res.exitCode)
+			return Response.json({ message: res.text() }, { status: 500 });
+	}
 
 	return new Response("Completed build.", {
 		status: 200,
