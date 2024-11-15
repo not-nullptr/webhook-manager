@@ -65,20 +65,21 @@ async function handleRequest(req: Request) {
 	// 		{ status: 500 }
 	// 	);
 
-	const commands = ["git pull", ...v.build, `pm2 restart ${k}`].map(
-		(c) => `sh -c "cd ${v.path} && ${c}"`
-	);
+	const commands = [["git", "pull"], ...v.build, ["pm2", "restart", k]];
 
-	const { stdout, stderr, exitCode } = await Bun.spawn(commands);
-
-	if (exitCode !== 0) {
-		return new Response("Error building.", {
-			status: 500,
+	commands.forEach(async (command) => {
+		const { stdout, stderr, exitCode, exited } = Bun.spawn(command, {
+			cwd: v.path,
 		});
-	}
-
-	console.log(`stdout: ${stdout}`);
-	if (stderr) console.error(`stderr: ${stderr}`);
+		await exited;
+		console.log(`stdout: ${stdout}`);
+		if (stderr) console.error(`stderr: ${stderr}`);
+		if (exitCode !== 0)
+			return Response.json(
+				{ message: `Error building. (command: ${command})` },
+				{ status: 500 }
+			);
+	});
 
 	return new Response("Completed build.", {
 		status: 200,
