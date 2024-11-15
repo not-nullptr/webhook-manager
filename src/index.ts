@@ -65,11 +65,11 @@ async function handleRequest(req: Request) {
 	// 		{ status: 500 }
 	// 	);
 
-	const commands = ["git pull", ...v.build, `pm2 restart ${k}`];
+	const commands = ["git pull", ...v.build, `pm2 restart ${k}`].map(
+		(c) => `sh -c "cd ${v.path} && ${c}"`
+	);
 
-	const { stdout, stderr, exitCode } = await Bun.spawn(commands, {
-		cwd: v.path,
-	});
+	const { stdout, stderr, exitCode } = await Bun.spawn(commands);
 
 	if (exitCode !== 0) {
 		return new Response("Error building.", {
