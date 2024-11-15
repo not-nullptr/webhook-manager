@@ -24,12 +24,12 @@ async function handleRequest(req: Request) {
 	const url = new URL(req.url);
 
 	if (url.pathname !== "/github-webhook") {
-		return new Response("Not Found", { status: 404 });
+		return Response.json({ message: "Not Found" }, { status: 404 });
 	}
 
 	const body = await req.text();
 	if (!verifySignature(req, body)) {
-		return new Response("Invalid signature", { status: 401 });
+		return Response.json({ message: "Invalid signature" }, { status: 401 });
 	}
 
 	const payload = JSON.parse(body);
@@ -37,25 +37,34 @@ async function handleRequest(req: Request) {
 	const [k, v] =
 		Object.entries(config).find(([k, v]) => v.ref === payload.ref) || [];
 	if (!k || !v) {
-		return new Response("No action taken.", { status: 200 });
+		return Response.json({ message: "No action taken." }, { status: 200 });
 	}
 
 	const { exitCode: gitExitCode } = await $`git pull`.cwd(v.path);
 
 	if (gitExitCode !== 0)
-		return new Response("Error pulling from git.", { status: 500 });
+		return Response.json(
+			{ message: "Error pulling from git." },
+			{ status: 500 }
+		);
 
 	for (const command of v.build) {
 		const { stdout, stderr, exitCode } = await $`${command}`.cwd(v.path);
 		console.log(`stdout: ${stdout}`);
 		if (stderr) console.error(`stderr: ${stderr}`);
 		if (exitCode !== 0)
-			return new Response("Error building.", { status: 500 });
+			return Response.json(
+				{ message: `Error building. (command: ${command})` },
+				{ status: 500 }
+			);
 	}
 
 	const { exitCode: pm2ExitCode } = await $`pm2 restart ${k}`;
 	if (pm2ExitCode !== 0)
-		return new Response("Error restarting pm2.", { status: 500 });
+		return Response.json(
+			{ message: "Error restarting pm2." },
+			{ status: 500 }
+		);
 
 	return new Response("Completed build.", {
 		status: 200,
