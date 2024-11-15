@@ -34,7 +34,8 @@ async function handleRequest(req: Request) {
 	const payload = JSON.parse(body);
 
 	const [k, v] =
-		Object.entries(config).find(([k, v]) => v.ref === payload.ref) || [];
+		Object.entries(config.tasks).find(([k, v]) => v.ref === payload.ref) ||
+		[];
 	if (!k || !v) {
 		return Response.json({ message: "No action taken." }, { status: 200 });
 	}
@@ -65,7 +66,11 @@ async function handleRequest(req: Request) {
 	// 		{ status: 500 }
 	// 	);
 
-	const commands = [["git", "pull"], ...v.build, ["pm2", "restart", k]];
+	const commands = [
+		["git", "pull"],
+		...v.build,
+		[`${config.binPath}/pm2`, "restart", k],
+	];
 
 	commands.forEach(async (command) => {
 		const { stdout, stderr, exitCode, exited } = Bun.spawn(command, {

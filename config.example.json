@@ -1,10 +1,13 @@
 {
-	"vert": {
-		"path": "/root/nullptr/VERT",
-		"ref": "refs/heads/main",
-		"build": [
-			["bun", "i"],
-			["bun", "run", "build"]
-		]
-	}
+	"tasks": {
+		"vert": {
+			"path": "/root/nullptr/VERT",
+			"ref": "refs/heads/main",
+			"build": [
+				["bun", "i"],
+				["bun", "run", "build"]
+			]
+		}
+	},
+	"binPath": "/root/.bun/bin"
 }
