@@ -8,6 +8,5 @@
 				["bun", "run", "build"]
 			]
 		}
-	},
-	"binPath": "/root/.bun/bin"
+	}
 }
