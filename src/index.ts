@@ -1,5 +1,4 @@
 import crypto, { type BinaryLike } from "crypto";
-import { $ } from "bun";
 import config from "../config.json";
 
 const PORT = process.env.PORT || 3000;
@@ -40,31 +39,46 @@ async function handleRequest(req: Request) {
 		return Response.json({ message: "No action taken." }, { status: 200 });
 	}
 
-	const { exitCode: gitExitCode } = await $`git pull`.cwd(v.path);
+	// const { exitCode: gitExitCode } = await $`git pull`.cwd(v.path);
 
-	if (gitExitCode !== 0)
-		return Response.json(
-			{ message: "Error pulling from git." },
-			{ status: 500 }
-		);
+	// if (gitExitCode !== 0)
+	// 	return Response.json(
+	// 		{ message: "Error pulling from git." },
+	// 		{ status: 500 }
+	// 	);
 
-	for (const command of v.build) {
-		const { stdout, stderr, exitCode } = await $`${command}`.cwd(v.path);
-		console.log(`stdout: ${stdout}`);
-		if (stderr) console.error(`stderr: ${stderr}`);
-		if (exitCode !== 0)
-			return Response.json(
-				{ message: `Error building. (command: ${command})` },
-				{ status: 500 }
-			);
+	// for (const command of v.build) {
+	// 	const { stdout, stderr, exitCode } = await $`${command}`.cwd(v.path);
+	// 	console.log(`stdout: ${stdout}`);
+	// 	if (stderr) console.error(`stderr: ${stderr}`);
+	// 	if (exitCode !== 0)
+	// 		return Response.json(
+	// 			{ message: `Error building. (command: ${command})` },
+	// 			{ status: 500 }
+	// 		);
+	// }
+
+	// const { exitCode: pm2ExitCode } = await $`pm2 restart ${k}`;
+	// if (pm2ExitCode !== 0)
+	// 	return Response.json(
+	// 		{ message: "Error restarting pm2." },
+	// 		{ status: 500 }
+	// 	);
+
+	const commands = ["git pull", ...v.build, `pm2 restart ${k}`];
+
+	const { stdout, stderr, exitCode } = await Bun.spawn(commands, {
+		cwd: v.path,
+	});
+
+	if (exitCode !== 0) {
+		return new Response("Error building.", {
+			status: 500,
+		});
 	}
 
-	const { exitCode: pm2ExitCode } = await $`pm2 restart ${k}`;
-	if (pm2ExitCode !== 0)
-		return Response.json(
-			{ message: "Error restarting pm2." },
-			{ status: 500 }
-		);
+	console.log(`stdout: ${stdout}`);
+	if (stderr) console.error(`stderr: ${stderr}`);
 
 	return new Response("Completed build.", {
 		status: 200,
