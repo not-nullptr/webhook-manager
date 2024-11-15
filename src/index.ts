@@ -70,10 +70,10 @@ async function handleRequest(req: Request) {
 	commands.forEach(async (command) => {
 		const { stdout, stderr, exitCode, exited } = Bun.spawn(command, {
 			cwd: v.path,
+			stderr: "pipe",
+			stdout: "pipe",
 		});
 		await exited;
-		console.log(`stdout: ${stdout}`);
-		if (stderr) console.error(`stderr: ${stderr}`);
 		if (exitCode !== 0)
 			return Response.json(
 				{ message: `Error building. (command: ${command})` },
