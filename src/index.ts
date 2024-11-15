@@ -70,7 +70,7 @@ async function handleRequest(req: Request) {
 	const commands = [`git pull`, ...v.build, `pm2 restart ${k}`];
 
 	for (const command of commands) {
-		const res = await $`${command}`.cwd(v.path);
+		const res = await $`sh -c '${command}'`.cwd(v.path);
 		if (res.exitCode)
 			return Response.json({ message: res.text() }, { status: 500 });
 	}
