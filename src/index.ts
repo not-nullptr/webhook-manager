@@ -67,10 +67,10 @@ async function handleRequest(req: Request) {
 	// 	);
 
 	const commands = [
-		["sh", "-c", `cd ${v.path} && git pull`],
-		...v.build,
+		["sh", "-c", `'cd ${v.path} && git pull'`],
+		...v.build.map((command) => ["sh", "-c", `'${command.join(" ")}'`]),
 		// [`${config.binPath}/pm2`, "restart", k],
-		["sh", "-c", `pm2 restart ${k}`],
+		["sh", "-c", `'pm2 restart ${k}'`],
 	];
 
 	commands.forEach(async (command) => {
