@@ -70,8 +70,8 @@ async function handleRequest(req: Request) {
 	commands.forEach(async (command) => {
 		const { stdout, stderr, exitCode, exited } = Bun.spawn(command, {
 			cwd: v.path,
-			stderr: "pipe",
-			stdout: "pipe",
+			stderr: "inherit",
+			stdout: "inherit",
 		});
 		await exited;
 		if (exitCode !== 0)
